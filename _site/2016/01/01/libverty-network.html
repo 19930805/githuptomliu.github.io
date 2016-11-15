@@ -1,0 +1,141 @@
+<p>#openstack 网络</p>
+
+<p>##修改计算节点</p>
+<blockquote>
+  <p>[ovs]</p>
+</blockquote>
+
+<blockquote>
+  <p>enable_tunneling = True</p>
+</blockquote>
+
+<blockquote>
+  <p>tunnel_type = vxlan</p>
+</blockquote>
+
+<blockquote>
+  <p>integration_bridge = br-int</p>
+</blockquote>
+
+<blockquote>
+  <p>local_ip = 192.168.81.181</p>
+</blockquote>
+
+<blockquote>
+  <p>bridge_mappings = external:br-ex</p>
+</blockquote>
+
+<blockquote>
+  <p>把bridge_mappings = external:br-ex注释掉，然后重启ovs agent</p>
+</blockquote>
+
+<blockquote>
+  <p>systemctl restart neutron-openvswitch-agent.service</p>
+</blockquote>
+
+<p>##创建网络
+###创建网络（外网）</p>
+<ol>
+  <li>创建外网
+    <blockquote>
+      <p>neutron net-create ext-net –shared –router:external True –provider:physical_network external –provider:network_type flat</p>
+    </blockquote>
+  </li>
+  <li>创建外网子网
+    <blockquote>
+      <p>neutron subnet-create ext-net –name ext-subnet –allocation-pool start=192.168.79.150,end=192.168.79.200 –disable-dhcp –gateway 192.168.79.2  192.168.79.0/24</p>
+    </blockquote>
+  </li>
+</ol>
+
+<blockquote>
+  <p>start到end这个网段是给floting用的，也就是如果你的虚拟机如果想上外网，必须要有一个floating IP才可以上面</p>
+</blockquote>
+
+<ol>
+  <li>创建内网
+    <blockquote>
+      <p>neutron net-create demo-net</p>
+    </blockquote>
+  </li>
+  <li>创建内网子网
+    <blockquote>
+      <p>neutron subnet-create demo-net –name demo-subnet –gateway 192.168.1.1 192.168.1.0/24</p>
+    </blockquote>
+  </li>
+</ol>
+
+<blockquote>
+  <p>这个网段就是虚拟机的内部网，你可以通过网络节点登录到路由器茶看到</p>
+</blockquote>
+
+<ol>
+  <li>创建路由
+    <blockquote>
+      <p>neutron router-create demo-router</p>
+    </blockquote>
+  </li>
+  <li>把内网的子网挂载到路由上
+    <blockquote>
+      <p>neutron router-interface-add demo-router demo-subnet</p>
+    </blockquote>
+  </li>
+  <li>给路由设置上网网关，其实就是加上外网
+    <blockquote>
+      <p>neutron router-gateway-set demo-router ext-net</p>
+    </blockquote>
+  </li>
+</ol>
+
+<p>如果是网络上面对于内网到路由是添加接口，对于外网到路由是设置网关</p>
+
+<ol>
+  <li>创建虚拟机
+    <blockquote>
+      <p>nova boot –flavor m1.tiny –image cirros-0.3.1-x86_32 –nic net-id=$内网子网ID
+ –security-group default  demo-instance1</p>
+    </blockquote>
+  </li>
+  <li>
+    <p>给虚拟机分配floating IP</p>
+  </li>
+  <li>在网络节点登录到路由器
+    <blockquote>
+      <p>查看：ip netns</p>
+    </blockquote>
+  </li>
+</ol>
+
+<blockquote>
+  <p>进入：ip netns exec qrouter-57f10528-1a2e-40d9-9f0a-c0cf7fc2ebad bash</p>
+</blockquote>
+
+<blockquote>
+  <p>查看路由：ip route ls</p>
+</blockquote>
+
+<blockquote>
+  <p>可以看到之前内网的路由：192.168.1.0/24 dev qr-b8bc3cc3-7d  proto kernel  scope link  src 192.168.1.1.如果虚拟机是启动的，查看实例的虚拟ip，那么可以ping通，floating ip也是</p>
+</blockquote>
+
+<p>##排错</p>
+
+<ol>
+  <li>查看各个agen是否正常:查看alive字段，如果有问题，重启网络几点上面的neutron服务</li>
+</ol>
+
+<blockquote>
+  <p>neutron agent-list</p>
+</blockquote>
+
+<ol>
+  <li>创建虚拟机失败，提示no avalid host（没有可用的虚拟机）</li>
+</ol>
+
+<blockquote>
+  <p>nova service-list</p>
+</blockquote>
+
+<blockquote>
+  <p>nova host-list</p>
+</blockquote>

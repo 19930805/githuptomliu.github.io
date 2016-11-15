@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hawkerous</title>
+    <description>record life.
+</description>
+    <link>http://linbing.github.io/</link>
+    <atom:link href="http://linbing.github.io/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Tue, 15 Nov 2016 10:13:52 +0800</pubDate>
+    <lastBuildDate>Tue, 15 Nov 2016 10:13:52 +0800</lastBuildDate>
+    <generator>Jekyll v3.1.6</generator>
+    
+      <item>
+        <title>Libverty Network</title>
+        <description>&lt;p&gt;#openstack 网络&lt;/p&gt;
+
+&lt;p&gt;##修改计算节点&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;[ovs]&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;enable_tunneling = True&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;tunnel_type = vxlan&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;integration_bridge = br-int&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;local_ip = 192.168.81.181&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;bridge_mappings = external:br-ex&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;把bridge_mappings = external:br-ex注释掉，然后重启ovs agent&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;systemctl restart neutron-openvswitch-agent.service&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;##创建网络
+###创建网络（外网）&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;创建外网
+    &lt;blockquote&gt;
+      &lt;p&gt;neutron net-create ext-net –shared –router:external True –provider:physical_network external –provider:network_type flat&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+  &lt;li&gt;创建外网子网
+    &lt;blockquote&gt;
+      &lt;p&gt;neutron subnet-create ext-net –name ext-subnet –allocation-pool start=192.168.79.150,end=192.168.79.200 –disable-dhcp –gateway 192.168.79.2  192.168.79.0/24&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;start到end这个网段是给floting用的，也就是如果你的虚拟机如果想上外网，必须要有一个floating IP才可以上面&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;创建内网
+    &lt;blockquote&gt;
+      &lt;p&gt;neutron net-create demo-net&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+  &lt;li&gt;创建内网子网
+    &lt;blockquote&gt;
+      &lt;p&gt;neutron subnet-create demo-net –name demo-subnet –gateway 192.168.1.1 192.168.1.0/24&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;这个网段就是虚拟机的内部网，你可以通过网络节点登录到路由器茶看到&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;创建路由
+    &lt;blockquote&gt;
+      &lt;p&gt;neutron router-create demo-router&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+  &lt;li&gt;把内网的子网挂载到路由上
+    &lt;blockquote&gt;
+      &lt;p&gt;neutron router-interface-add demo-router demo-subnet&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+  &lt;li&gt;给路由设置上网网关，其实就是加上外网
+    &lt;blockquote&gt;
+      &lt;p&gt;neutron router-gateway-set demo-router ext-net&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;如果是网络上面对于内网到路由是添加接口，对于外网到路由是设置网关&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;创建虚拟机
+    &lt;blockquote&gt;
+      &lt;p&gt;nova boot –flavor m1.tiny –image cirros-0.3.1-x86_32 –nic net-id=$内网子网ID
+ –security-group default  demo-instance1&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;给虚拟机分配floating IP&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;在网络节点登录到路由器
+    &lt;blockquote&gt;
+      &lt;p&gt;查看：ip netns&lt;/p&gt;
+    &lt;/blockquote&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;进入：ip netns exec qrouter-57f10528-1a2e-40d9-9f0a-c0cf7fc2ebad bash&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;查看路由：ip route ls&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;可以看到之前内网的路由：192.168.1.0/24 dev qr-b8bc3cc3-7d  proto kernel  scope link  src 192.168.1.1.如果虚拟机是启动的，查看实例的虚拟ip，那么可以ping通，floating ip也是&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;##排错&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;查看各个agen是否正常:查看alive字段，如果有问题，重启网络几点上面的neutron服务&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;neutron agent-list&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;创建虚拟机失败，提示no avalid host（没有可用的虚拟机）&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;nova service-list&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;nova host-list&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Fri, 01 Jan 2016 00:00:00 +0800</pubDate>
+        <link>http://linbing.github.io/2016/01/01/libverty-network.html</link>
+        <guid isPermaLink="true">http://linbing.github.io/2016/01/01/libverty-network.html</guid>
+        
+        
+      </item>
+    
+  </channel>
+</rss>
