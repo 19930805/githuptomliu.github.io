@@ -6,15 +6,15 @@
 # 'jekyll serve'. If you change this file, please restart the server process.
 
 # Site settings
-title: github
-email: hawkerous@gmail.com
+title: github--Personal blog
+email: tomwebliu@gmail.com
 description: > # this means to ignore newlines until "baseurl:"
   record life.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "http://githupTomLiu.github.io" # the base hostname & protocol for your site
-twitter_username: hawkerous
-github_username:  github
-sina_weibo_username: hawkerous
+twitter_username: kobe
+github_username:  githupTomLiu
+sina_weibo_username: DreamsTom
 
 
 # Build settings
