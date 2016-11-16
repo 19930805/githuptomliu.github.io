@@ -14,8 +14,7 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "http://githupTomLiu.github.io" # the base hostname & protocol for your site
 twitter_username: hawkerous
 github_username:  github
-#sina_weibo_username: hawkerous
-HENGFU: HOEM,MENUT,NUEM3，NEY6
+sina_weibo_username: hawkerous
 
 
 # Build settings
